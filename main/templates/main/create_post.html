@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Новый пост</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            height: 300px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        .checkbox {
+            margin: 15px 0;
+        }
+        
+        .back {
+            color: #666;
+            text-decoration: none;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        
+        .error {
+            color: red;
+            margin: 10px 0;
+        }
+        
+        .success {
+            color: green;
+            margin: 10px 0;
+        }
+        
+        /* Стили для планов подписок */
+        .subscription-plans {
+            display: none;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .plan-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 5px;
+        }
+        
+        .plan-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .plan-price {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .no-plans {
+            color: #666;
+            font-style: italic;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .create-plan-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <a href="{% url 'home' %}" class="back">← Назад</a>
+    
+    <h1>Создать новый пост</h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <input type="text" 
+               name="header" 
+               placeholder="Заголовок поста" 
+               required>
+        
+        <textarea name="text" 
+                  placeholder="Текст поста" 
+                  required></textarea>
+        
+        <input type="text" 
+               name="images" 
+               placeholder="Ссылка на картинку (необязательно)">
+        
+        <div class="checkbox">
+            <input type="checkbox" name="is_premial" id="is_premial">
+            <label for="is_premial">Премиум контент (только для подписчиков)</label>
+        </div>
+        
+        <!-- Блок с планами подписок (скрыт по умолчанию) -->
+        <div class="subscription-plans" id="subscriptionPlans">
+            <h3>Выберите план подписки для этого поста:</h3>
+            
+            {% if subscription_plans %}
+                {% for plan in subscription_plans %}
+                    <div class="plan-item">
+                        <input type="radio" 
+                               name="subscription_plan" 
+                               value="{{ plan.id }}" 
+                               id="plan{{ plan.id }}"
+                               {% if forloop.first %}checked{% endif %}>
+                        <label for="plan{{ plan.id }}">
+                            <span class="plan-name">{{ plan.name }}</span> - 
+                            <span class="plan-price">{{ plan.price }} ₽</span>
+                        </label>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-plans">
+                    У вас нет созданных планов подписок.<br>
+                    <a href="{% url 'create_subscribe_plan' %}" class="create-plan-link">
+                        Создать план подписки
+                    </a>
+                </div>
+            {% endif %}
+            
+            <div style="margin-top: 10px;">
+                <label>
+                    <input type="checkbox" name="all_subscriptions" value="true" checked>
+                    Доступен для всех планов подписки
+                </label>
+            </div>
+        </div>
+        
+        <button type="submit">Опубликовать</button>
+    </form>
+
+    <script>
+        // Показываем/скрываем планы подписок при нажатии на чекбокс премиум
+        const premiumCheckbox = document.getElementById('is_premial');
+        const plansSection = document.getElementById('subscriptionPlans');
+        
+        premiumCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                plansSection.style.display = 'block';
+            } else {
+                plansSection.style.display = 'none';
+            }
+        });
+        
+        // При загрузке страницы проверяем состояние чекбокса
+        if (premiumCheckbox.checked) {
+            plansSection.style.display = 'block';
+        }
+        
+        // Простейшая валидация
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const header = document.querySelector('input[name="header"]').value.trim();
+            const text = document.querySelector('textarea[name="text"]').value.trim();
+            
+            if (!header) {
+                alert('Введите заголовок');
+                e.preventDefault();
+            }
+            
+            if (!text) {
+                alert('Введите текст поста');
+                e.preventDefault();
+            }
+            
+            // Если выбран премиум, проверяем что есть хотя бы один план
+            if (premiumCheckbox.checked) {
+                const hasPlans = document.querySelectorAll('.plan-item').length > 0;
+                const noPlansSection = document.querySelector('.no-plans');
+                
+                if (noPlansSection && noPlansSection.offsetParent !== null) {
+                    if (!confirm('У вас нет планов подписок. Создать пост как обычный?')) {
+                        e.preventDefault();
+                        window.location.href = "{% url 'create_subscribe_plan' %}";
+                    }
+                }
+            }
+        });
+        
+        // Автоматическое фокусирование на заголовке
+        document.querySelector('input[name="header"]').focus();
+    </script>
+</body>
+</html>

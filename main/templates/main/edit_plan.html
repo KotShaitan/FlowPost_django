@@ -1,0 +1,472 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Редактировать план подписки{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-plan-container {
+        max-width: 700px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+    
+    .edit-plan-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .edit-plan-header {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        padding: 25px;
+        color: white;
+        text-align: center;
+    }
+    
+    .edit-plan-header h1 {
+        font-size: 1.8rem;
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .edit-plan-body {
+        padding: 30px;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 500;
+        font-size: 1rem;
+    }
+    
+    .form-label.required::after {
+        content: " *";
+        color: #dc3545;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e1e5eb;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.3s;
+        font-family: 'Ubuntu', sans-serif;
+    }
+    
+    .form-control:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40,167,69,.15);
+        outline: none;
+    }
+    
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+        line-height: 1.5;
+    }
+    
+    .form-text {
+        display: block;
+        margin-top: 5px;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .price-input-container {
+        position: relative;
+        max-width: 300px;
+    }
+    
+    .currency-symbol {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #495057;
+        font-weight: 500;
+    }
+    
+    .price-input {
+        padding-left: 30px;
+        font-size: 18px;
+        font-weight: 500;
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 1px solid #f0f0f0;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        flex: 1;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40,167,69,0.25);
+    }
+    
+    .btn-secondary {
+        background: #f8f9fa;
+        color: #495057;
+        border: 1px solid #e1e5eb;
+    }
+    
+    .btn-secondary:hover {
+        background: #e9ecef;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+        min-width: 140px;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220,53,69,0.25);
+    }
+    
+    .alert {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        font-size: 0.95rem;
+    }
+    
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+    
+    .alert-info {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+        color: #0c5460;
+    }
+    
+    .plan-preview {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 25px 0;
+        border-left: 4px solid #28a745;
+    }
+    
+    .plan-preview h4 {
+        margin: 0 0 15px 0;
+        color: #333;
+        font-size: 1.2rem;
+    }
+    
+    .preview-item {
+        display: flex;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .preview-label {
+        min-width: 100px;
+        color: #666;
+        font-weight: 500;
+    }
+    
+    .preview-value {
+        color: #333;
+        flex: 1;
+    }
+    
+    .preview-value.price {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #28a745;
+    }
+    
+    @media (max-width: 768px) {
+        .edit-plan-container {
+            padding: 0 15px;
+            margin: 25px auto;
+        }
+        
+        .edit-plan-body {
+            padding: 20px;
+        }
+        
+        .button-group {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+        
+        .btn-danger {
+            min-width: 100%;
+        }
+        
+        .price-input-container {
+            max-width: 100%;
+        }
+    }
+    
+    /* Счетчик символов */
+    .char-counter {
+        text-align: right;
+        font-size: 0.85rem;
+        margin-top: 5px;
+        color: #6c757d;
+    }
+    
+    .char-counter.warning {
+        color: #ffc107;
+    }
+    
+    .char-counter.error {
+        color: #dc3545;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block header %}
+<div class="top">
+    <div class="finger-paint-regular" onclick="window.location.href='{% url 'home' %}'">FlowPost</div>
+    <div class="search_bar">
+        <form method="get" action="{% url 'search' %}" class="search-form">
+            <input type="text" name="q" required placeholder="Поиск...">
+        </form>
+    </div>
+    
+    <div class="reg">
+        {% if user.is_authenticated %}
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    {{ user.username }}
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'profile' user.id %}">Профиль</a></li>
+                    <li><a class="dropdown-item" href="{% url 'create_post' %}">Создать пост</a></li>
+                    {% if user.isAuthor %}
+                    <li><a class="dropdown-item" href="{% url 'create_subscribe_plan' %}">Создать Подписку</a></li>
+                    {% endif %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'logout' %}">Выйти</a></li>
+                </ul>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-primary">Войти</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="edit-plan-container">
+    <!-- Сообщения -->
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Основная карточка -->
+    <div class="edit-plan-card">
+        <!-- Заголовок -->
+        <div class="edit-plan-header">
+            <h1>✏️ Редактировать план подписки</h1>
+        </div>
+        
+        <!-- Тело формы -->
+        <div class="edit-plan-body">
+            <form method="post" action="{% url 'edit_plan' plan.id %}">
+                {% csrf_token %}
+                
+                <!-- Информационное сообщение -->
+                <div class="alert alert-info">
+                    <strong>💰 Редактирование плана подписки</strong><br>
+                    Обновите информацию о вашем плане подписки
+                </div>
+                
+                <!-- Превью текущих данных -->
+                <div class="plan-preview">
+                    <h4>Текущие данные плана:</h4>
+                    <div class="preview-item">
+                        <span class="preview-label">Название:</span>
+                        <span class="preview-value">{{ plan.name }}</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Цена:</span>
+                        <span class="preview-value price">{{ plan.price }} ₽</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Описание:</span>
+                        <span class="preview-value">{{ plan.describe|default:"Нет описания" }}</span>
+                    </div>
+                </div>
+                
+                <!-- Поле названия -->
+                <div class="form-group">
+                    <label for="name" class="form-label required">Название плана</label>
+                    <input type="text" id="name" name="name" class="form-control" 
+                           value="{{ plan.name }}" required
+                           placeholder="Например: Премиум подписка, Базовый доступ...">
+                    <span class="form-text">Краткое и понятное название для вашего плана</span>
+                </div>
+                
+                <!-- Поле цены -->
+                <div class="form-group">
+                    <label for="price" class="form-label required">Цена (в рублях)</label>
+                    <div class="price-input-container">
+                        <span class="currency-symbol">₽</span>
+                        <input type="number" id="price" name="price" class="form-control price-input"
+                               value="{{ plan.price }}" required
+                               placeholder="0.00" step="0.01" min="0" max="999999">
+                    </div>
+                    <span class="form-text">Стоимость подписки за месяц</span>
+                </div>
+                
+                <!-- Поле описания -->
+                <div class="form-group">
+                    <label for="describe" class="form-label">Описание плана</label>
+                    <textarea id="describe" name="describe" class="form-control" 
+                              placeholder="Опишите, что получают подписчики по этому плану...">{{ plan.describe }}</textarea>
+                    <div id="charCounter" class="char-counter">0/1000 символов</div>
+                    <span class="form-text">Расскажите о преимуществах и возможностях этой подписки</span>
+                </div>
+                
+                <!-- Кнопки действий -->
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Сохранить изменения
+                    </button>
+                    
+                    <a href="{% url 'profile' user.id %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Отмена
+                    </a>
+                    </form>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Подсчет символов в описании
+    const describeTextarea = document.getElementById('describe');
+    const charCounter = document.getElementById('charCounter');
+    
+    function updateCharCounter() {
+        const length = describeTextarea.value.length;
+        charCounter.textContent = `${length}/1000 символов`;
+        
+        // Меняем цвет в зависимости от количества символов
+        if (length === 0) {
+            charCounter.className = 'char-counter';
+        } else if (length > 800 && length <= 1000) {
+            charCounter.className = 'char-counter warning';
+        } else if (length > 1000) {
+            charCounter.className = 'char-counter error';
+        } else {
+            charCounter.className = 'char-counter';
+        }
+    }
+    
+    // Обновляем счетчик при загрузке страницы и при каждом вводе
+    describeTextarea.addEventListener('input', updateCharCounter);
+    updateCharCounter();
+    
+    // Валидация формы
+    const form = document.querySelector('form[method="post"]:not([onsubmit])');
+    form.addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value.trim();
+        const price = document.getElementById('price').value;
+        const describe = describeTextarea.value.trim();
+        
+        // Проверка названия
+        if (!name) {
+            e.preventDefault();
+            alert('Пожалуйста, введите название плана');
+            document.getElementById('name').focus();
+            return false;
+        }
+        
+        // Проверка цены
+        if (!price || parseFloat(price) <= 0) {
+            e.preventDefault();
+            alert('Пожалуйста, укажите корректную цену (больше 0)');
+            document.getElementById('price').focus();
+            return false;
+        }
+        
+        // Проверка длины описания
+        if (describe.length > 1000) {
+            e.preventDefault();
+            alert('Описание не должно превышать 1000 символов');
+            describeTextarea.focus();
+            return false;
+        }
+        
+        // Показываем индикатор загрузки
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сохранение...';
+        submitBtn.disabled = true;
+        
+        // Восстанавливаем кнопку если форма не отправлена
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 3000);
+    });
+    
+    // Автофокус на поле названия при загрузке страницы
+    window.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('name').focus();
+    });
+    
+    // Форматирование цены при вводе
+    const priceInput = document.getElementById('price');
+    priceInput.addEventListener('blur', function() {
+        let value = parseFloat(this.value);
+        if (!isNaN(value)) {
+            this.value = value.toFixed(2);
+        }
+    });
+</script>
+{% endblock %}

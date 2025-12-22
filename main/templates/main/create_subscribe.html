@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создать подписку - FlowPost</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #444;
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.15);
+        }
+        
+        .btn-submit {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .btn-submit:hover {
+            background-color: #0056b3;
+        }
+        
+        .form-text {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .back-link {
+            color: #6c757d;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .back-link:hover {
+            color: #333;
+        }
+        
+        .required {
+            color: #dc3545;
+        }
+        
+        .messages {
+            margin-bottom: 20px;
+        }
+        
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'profile' %}" class="back-link">
+            ← Назад в профиль
+        </a>
+        
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="form-card">
+            <h1>Создать новую подписку</h1>
+            
+            <form method="POST">
+                {% csrf_token %}
+                
+                <!-- Название подписки -->
+                <div class="mb-4">
+                    <label for="name" class="form-label">
+                        Название подписки <span class="required">*</span>
+                    </label>
+                    <input type="text" 
+                           id="name" 
+                           name="name" 
+                           class="form-control" 
+                           placeholder="Например: Премиум доступ к контенту"
+                           value="{{ form_data.name|default:'' }}"
+                           required>
+                    <div class="form-text">
+                        Придумайте понятное название для вашей подписки
+                    </div>
+                </div>
+                
+                <!-- Описание подписки -->
+                <div class="mb-4">
+                    <label for="description" class="form-label">
+                        Описание подписки
+                    </label>
+                    <textarea id="description" 
+                              name="description" 
+                              class="form-control" 
+                              rows="4"
+                              placeholder="Опишите, что получат подписчики. Это повысит конверсию!">{{ form_data.description|default:'' }}</textarea>
+                    <div class="form-text">
+                        Расскажите о преимуществах вашей подписки
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <!-- Цена -->
+                    <div class="col-md-6 mb-4">
+                        <label for="price" class="form-label">
+                            Цена подписки (₽) <span class="required">*</span>
+                        </label>
+                        <input type="number" 
+                               id="price" 
+                               name="price" 
+                               class="form-control" 
+                               min="100" 
+                               max="10000" 
+                               value="{{ form_data.price|default:'299' }}"
+                               required> 
+                    </div>
+
+                
+                <button type="submit" class="btn-submit">
+                    Создать подписку
+                </button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

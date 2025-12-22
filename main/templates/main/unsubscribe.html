@@ -1,0 +1,72 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Отписаться от {{ author.username }}{% endblock %}
+
+{% block content %}
+<div class="unsubscribe-container" style="max-width: 500px; margin: 100px auto; padding: 20px;">
+    <div class="card" style="border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+        <div class="card-body" style="padding: 40px 30px; text-align: center;">
+            <!-- Иконка -->
+            <div style="font-size: 48px; color: #dc3545; margin-bottom: 20px;">👋</div>
+            
+            <!-- Заголовок -->
+            <h2 style="color: #333; margin-bottom: 15px;">Отписаться от {{ author.username }}</h2>
+            
+            <!-- Сообщение -->
+            <p style="color: #666; margin-bottom: 25px; line-height: 1.5;">
+                Вы уверены, что хотите отписаться от {{ author.username }}?
+                После отписки вы потеряете доступ к премиум-контенту автора.
+            </p>
+            
+            <!-- Информация о подписке -->
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 3px solid #dc3545;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="color: #666;">План:</span>
+                    <span style="color: #333; font-weight: 500;">{{ subscription.plan.name }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #666;">Окончание подписки:</span>
+                    <span style="color: #333; font-weight: 500;">{{ subscription.date_end|date:"d.m.Y" }}</span>
+                </div>
+            </div>
+            
+            <!-- Кнопки -->
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <!-- Кнопка отписки -->
+                <form method="post" action="{% url 'unsubscribe' author.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="btn btn-danger" 
+                            style="padding: 12px 30px; font-weight: 500;">
+                        Да, отписаться
+                    </button>
+                </form>
+                
+                <!-- Кнопка отмены -->
+                <a href="{% url 'profile' author.id %}" 
+                   class="btn btn-outline-secondary" 
+                   style="padding: 12px 30px; font-weight: 500;">
+                    Нет, остаться
+                </a>
+            </div>
+            
+            <!-- Дополнительная информация -->
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                <p style="color: #999; font-size: 0.9rem; margin: 0;">
+                    Вы сможете снова подписаться в любое время
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Простой JavaScript для подтверждения -->
+<script>
+    // Дополнительное подтверждение
+    document.querySelector('form[action*="unsubscribe"]').addEventListener('submit', function(e) {
+        if (!confirm('Точно отписаться от {{ author.username }}?')) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

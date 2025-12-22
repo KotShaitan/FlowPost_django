@@ -1,0 +1,164 @@
+{% extends 'main/base.html' %}
+
+{% block header %}
+<div class="top">
+    <div class="finger-paint-regular" onclick="window.location.href='{% url 'home' %}'">FlowPost</div>
+    <div class="search_bar">
+        <form method="get" action="{% url 'search' %}" class="search-form">
+            <input type="text" name="q" required placeholder="Поиск...">
+        </form>
+    </div>
+    
+    <div class="reg">
+        {% if user.is_authenticated %}
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    {{ user.username }}
+                </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'profile' %}">Профиль</a>
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'create_post' %}">Создать пост</a>
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'create_subscribe_plan' %}">Создать Подписку</a></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Выйти</a></li>
+                    </ul>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-primary">Войти</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="flex-con">
+    <div class="left">
+        <h3>Мои подписки</h3>
+        {% if user.is_authenticated and subscriptions %}
+            {% for sub in subscription_plans|slice:":5" %}
+                <div class="subscription-item">
+                    <div class="author-name">{{ sub.name }}</div>
+                    <div class="subscription-price">{{ sub.price }} ₽</div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>У вас пока нет подписок</p>
+            <a href="{% url 'home' %}#authors" class="btn btn-sm btn-outline-primary">Найти авторов</a>
+        {% endif %}
+        <hr>
+        <h3>Популярные авторы</h3>
+        {% for author in authors %}
+            <div class="author-item">
+                <a href="{% url 'profile' author.id %}" style="text-decoration: none; color: #333;">
+                <span>{{ author.username }}</span>  <!-- Исправлено: author.username вместо author.user.username -->
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Центральная часть: Посты -->
+    <div class="full-post-container">
+        {% if posts %}
+            {% for post in posts %}
+                <div class="post-card">
+                    <div class="author-bar">
+                        <a href="{% url 'profile' post.author.id %}">
+                            <div style="display: flex; align-items: center;">
+                                <div class="avatar"></div>
+                                <div class="author-name">{{ post.author.username }}</div>
+                                {% if post.is_premial %}
+                                <span class="badge bg-warning ms-2">Премиум</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                        <div class="date-text">{{ post.created_at|date:"d.m.Y H:i" }}</div>
+                    </div>
+                    
+                    {% if post.images %}
+                        <img class="post-img" src="{{ post.images }}" alt="{{ post.header }}">
+                    {% endif %}
+                    
+                    <div class="post-header">
+                        <h3>{{ post.header }}</h3>
+                    </div>
+                    
+                    <div class="text-field">
+                        <p>{{ post.text|truncatewords:50 }}</p>
+                    </div>
+                    
+                    <div class="post-actions">
+                        {% if post.is_premial %}
+                            <span class="premium-badge">Только для подписчиков</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <!-- Пагинация -->
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Назад</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперед</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+            
+        {% else %}
+            <div class="no-posts">
+                <h3>Постов пока нет</h3>
+                {% if user.is_authenticated %}
+                    <p>Будьте первым, кто создаст пост!</p>
+                    <a href="{% url 'create_post' %}" class="btn btn-primary">Создать пост</a>
+                {% else %}
+                    <p>Войдите, чтобы создать пост</p>
+                    <a href="{% url 'login' %}" class="btn btn-primary">Войти</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Правая панель: Категории -->
+    <div class="right">
+        <h3>Категории</h3>
+        <ul class="category-list">
+            <li><a href="?category=all">Все посты</a></li>
+            <li><a href="?category=premium">Премиум</a></li>
+            <li><a href="?category=free">Бесплатные</a></li>
+        </ul>
+        
+        <hr>
+        
+        <h3>Статистика</h3>
+        <div class="stats">
+            <p>Всего постов: {{ posts.paginator.count }}</p>
+            <p>Авторов: {{ authors.count }}</p>
+            {% if user.is_authenticated %}
+                <p>Ваши подписки: {{ subscriptions.count }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

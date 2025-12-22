@@ -1,0 +1,363 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Редактировать профиль - {{ user.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-profile-container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+    
+    .edit-profile-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .edit-profile-header {
+        background: linear-gradient(135deg, #007bff, #00d4ff);
+        padding: 25px;
+        color: white;
+        text-align: center;
+    }
+    
+    .edit-profile-header h1 {
+        font-size: 1.8rem;
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .edit-profile-body {
+        padding: 30px;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 10px;
+        color: #333;
+        font-weight: 500;
+        font-size: 1rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #e1e5eb;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.3s;
+        font-family: 'Ubuntu', sans-serif;
+        line-height: 1.5;
+    }
+    
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.15);
+        outline: none;
+    }
+    
+    textarea.form-control {
+        min-height: 180px;
+        resize: vertical;
+        line-height: 1.6;
+    }
+    
+    .form-text {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #f0f0f0;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        flex: 1;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff, #00d4ff);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,123,255,0.25);
+    }
+    
+    .btn-secondary {
+        background: #f8f9fa;
+        color: #495057;
+        border: 1px solid #e1e5eb;
+    }
+    
+    .btn-secondary:hover {
+        background: #e9ecef;
+    }
+    
+    .current-bio {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+        font-size: 0.95rem;
+        color: #495057;
+        line-height: 1.5;
+        border-left: 3px solid #007bff;
+        white-space: pre-wrap;
+    }
+    
+    .alert {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        font-size: 0.95rem;
+    }
+    
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+    
+    .alert-info {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+        color: #0c5460;
+    }
+    
+    .alert-warning {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+    }
+    
+    @media (max-width: 768px) {
+        .edit-profile-container {
+            padding: 0 15px;
+            margin: 25px auto;
+        }
+        
+        .edit-profile-body {
+            padding: 20px;
+        }
+        
+        .button-group {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+    }
+    
+    /* Счетчик символов */
+    .char-counter {
+        text-align: right;
+        font-size: 0.85rem;
+        margin-top: 5px;
+        color: #6c757d;
+    }
+    
+    .char-counter.warning {
+        color: #ffc107;
+    }
+    
+    .char-counter.error {
+        color: #dc3545;
+        font-weight: 500;
+    }
+    
+    
+</style>
+{% endblock %}
+
+{% block header %}
+<div class="top">
+    <div class="finger-paint-regular" onclick="window.location.href='{% url 'home' %}'">FlowPost</div>
+    <div class="search_bar">
+        <form method="get" action="{% url 'search' %}" class="search-form">
+            <input type="text" name="q" required placeholder="Поиск...">
+        </form>
+    </div>
+    
+    <div class="reg">
+        {% if user.is_authenticated %}
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    {{ user.username }}
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'profile' user.id %}">Профиль</a></li>
+                    <li><a class="dropdown-item" href="{% url 'create_post' %}">Создать пост</a></li>
+                    {% if user.isAuthor %}
+                    <li><a class="dropdown-item" href="{% url 'create_subscribe_plan' %}">Создать Подписку</a></li>
+                    {% endif %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'logout' %}">Выйти</a></li>
+                </ul>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-primary">Войти</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="edit-profile-container">
+    <!-- Сообщения -->
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Основная карточка -->
+    <div class="edit-profile-card">
+        <!-- Заголовок -->
+        <div class="edit-profile-header">
+            <h1>✏️ Редактировать информацию о себе</h1>
+        </div>
+        
+        <!-- Тело формы -->
+        <div class="edit-profile-body">
+            <form method="post" action="{% url 'edit_profile' %}">
+                {% csrf_token %}
+                
+                <!-- Информационное сообщение -->
+                <div class="alert alert-info">
+                    <strong>📝 Ваша биография</strong><br>
+                    Расскажите о себе, чтобы другие пользователи могли вас лучше узнать
+                </div>
+                
+                <!-- Текущая биография -->
+                {% if user.bio %}
+                <div class="current-bio-section">
+                    <div class="form-label">Текущая информация:</div>
+                    <div class="current-bio">
+                        {{ user.bio }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Поле для редактирования bio -->
+                <div class="form-group">
+                    <label for="bio" class="form-label">Редактировать информацию о себе:</label>
+                    <textarea id="bio" name="bio" class="form-control" 
+                              placeholder="Расскажите о себе, своих интересах, опыте, чем вы занимаетесь...">{{ user.bio }}</textarea>
+                </div>
+                
+                
+                <!-- Кнопки действий -->
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Сохранить изменения
+                    </button>
+                    
+                    <a href="{% url 'profile' user.id %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Подсчет символов в bio
+    const bioTextarea = document.getElementById('bio');
+    const charCounter = document.getElementById('charCounter');
+    
+    function updateCharCounter() {
+        const length = bioTextarea.value.length;
+        charCounter.textContent = `${length}/500 символов`;
+        
+        // Меняем цвет в зависимости от количества символов
+        if (length === 0) {
+            charCounter.className = 'char-counter';
+        } else if (length > 400 && length <= 500) {
+            charCounter.className = 'char-counter warning';
+        } else if (length > 500) {
+            charCounter.className = 'char-counter error';
+        } else {
+            charCounter.className = 'char-counter';
+        }
+    }
+    
+    // Обновляем счетчик при загрузке страницы и при каждом вводе
+    bioTextarea.addEventListener('input', updateCharCounter);
+    updateCharCounter();
+    
+    // Валидация формы
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const bio = bioTextarea.value.trim();
+        
+        // Проверка длины bio
+        if (bio.length > 500) {
+            e.preventDefault();
+            alert('Информация о себе не должна превышать 500 символов');
+            bioTextarea.focus();
+            return false;
+        }
+        
+        // Проверка на пустое поле (можно закомментировать если bio необязательно)
+        if (bio.length === 0) {
+            if (!confirm('Вы не ввели информацию о себе. Сохранить пустое поле?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        // Показываем индикатор загрузки
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сохранение...';
+        submitBtn.disabled = true;
+        
+        // Восстанавливаем кнопку если форма не отправлена
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 3000);
+    });
+    
+    // Автофокус на поле bio при загрузке страницы
+    window.addEventListener('DOMContentLoaded', function() {
+        bioTextarea.focus();
+        // Устанавливаем курсор в конец текста
+        bioTextarea.setSelectionRange(bioTextarea.value.length, bioTextarea.value.length);
+    });
+</script>
+{% endblock %}

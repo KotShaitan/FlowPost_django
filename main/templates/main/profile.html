@@ -1,0 +1,840 @@
+{% extends 'main/base.html' %}
+
+{% block title %}{{ profile_user.username }} - Профиль{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Стили для страницы профиля */
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 40px;
+        color: white;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.1);
+    }
+    
+    .profile-info {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 5px solid white;
+        background: linear-gradient(135deg, #007bff, #00d4ff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .profile-details {
+        flex: 1;
+    }
+    
+    .profile-details h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        color: white;
+    }
+    
+    .profile-bio {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 20px;
+        max-width: 600px;
+    }
+    
+    .profile-stats {
+        display: flex;
+        gap: 30px;
+        margin-top: 20px;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .profile-actions {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 2;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .profile-content {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 30px;
+    }
+    
+    /* Левая панель */
+    .profile-sidebar {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        height: fit-content;
+    }
+    
+    .sidebar-section {
+        margin-bottom: 30px;
+    }
+    
+    .sidebar-section h3 {
+        color: #333;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+        font-size: 1.2rem;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f5f5f5;
+    }
+    
+    .info-label {
+        color: #666;
+    }
+    
+    .info-value {
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .subscription-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .subscription-price {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    
+    /* Основной контент */
+    .profile-main {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .tab-navigation {
+        display: flex;
+        background: white;
+        border-radius: 15px;
+        padding: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        overflow-x: auto;
+    }
+    
+    .tab-btn {
+        padding: 12px 24px;
+        border: none;
+        background: transparent;
+        color: #666;
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: 10px;
+        transition: all 0.3s;
+        white-space: nowrap;
+    }
+    
+    .tab-btn:hover {
+        background: #f8f9fa;
+        color: #007bff;
+    }
+    
+    .tab-btn.active {
+        background: linear-gradient(135deg, #007bff, #00d4ff);
+        color: white;
+        box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+    }
+    
+    .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Посты пользователя */
+    .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .post-card-profile {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    
+    .post-card-profile:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .post-image {
+        height: 180px;
+        overflow: hidden;
+    }
+    
+    .post-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+    
+    .post-card-profile:hover .post-image img {
+        transform: scale(1.05);
+    }
+    
+    .post-content {
+        padding: 20px;
+    }
+    
+    .post-content h4 {
+        margin-bottom: 10px;
+        color: #222;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .post-meta {
+        display: flex;
+        justify-content: space-between;
+        color: #666;
+        font-size: 0.9em;
+        margin-top: 15px;
+    }
+    
+    /* Подписки */
+    .subscriptions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .author-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: all 0.3s;
+    }
+    
+    .author-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    }
+    
+    .author-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #007bff, #00d4ff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    
+    .author-info h4 {
+        margin: 0 0 5px 0;
+        color: #333;
+    }
+    
+    .author-stats-small {
+        color: #666;
+        font-size: 0.9em;
+    }
+    
+    /* Подписчики */
+    .followers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+    }
+    
+    .follower-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+    }
+    
+    .follower-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    
+    /* Пустые состояния */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state h3 {
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .empty-state p {
+        color: #666;
+        margin-bottom: 20px;
+    }
+    
+    /* Адаптивность */
+    @media (max-width: 992px) {
+        .profile-content {
+            grid-template-columns: 1fr;
+        }
+        
+        .profile-info {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .profile-stats {
+            justify-content: center;
+        }
+        
+        .profile-actions {
+            position: static;
+            margin-top: 20px;
+            justify-content: center;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .profile-header {
+            padding: 30px 20px;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            font-size: 36px;
+        }
+        
+        .profile-details h1 {
+            font-size: 2rem;
+        }
+        
+        .posts-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .subscriptions-grid,
+        .followers-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+        
+        .tab-navigation {
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+    }
+    
+    /* Статус автора */
+    .author-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #ffd700, #ffed4e);
+        color: #333;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+    
+    .subscription-status {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 500;
+        margin-left: 10px;
+    }
+    
+    .subscribed {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+    
+    .not-subscribed {
+        background: #f8f9fa;
+        color: #666;
+        border: 1px solid #dee2e6;
+    }
+    
+    /* Кнопки действий */
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .action-button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 20px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        text-align: left;
+    }
+    
+    .action-button:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .action-button.edit {
+        background: #17a2b8;
+    }
+    
+    .action-button.edit:hover {
+        background: #117a8b;
+    }
+    
+    .action-button.danger {
+        background: #dc3545;
+    }
+    
+    .action-button.danger:hover {
+        background: #bd2130;
+    }
+    
+    .action-button.success {
+        background: #28a745;
+    }
+    
+    .action-button.success:hover {
+        background: #1e7e34;
+    }
+    
+    .action-icon {
+        font-size: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block header %}
+<div class="top">
+    <div class="finger-paint-regular" onclick="window.location.href='{% url 'home' %}'">FlowPost</div>
+    <div class="search_bar">
+        <form method="get" action="{% url 'search' %}" class="search-form">
+            <input type="text" name="q" required placeholder="Поиск...">
+        </form>
+    </div>
+    
+    <div class="reg">
+        {% if user.is_authenticated %}
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    {{ user.username }}
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'profile' user.id %}">Профиль</a></li>
+                    <li><a class="dropdown-item" href="{% url 'create_post' %}">Создать пост</a></li>
+                    <li><a class="dropdown-item" href="{% url 'create_subscribe_plan' %}">Создать Подписку</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'logout' %}">Выйти</a></li>
+                </ul>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-primary">Войти</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Шапка профиля -->
+    <div class="profile-header">
+        <div class="profile-info">
+            <div class="profile-avatar">
+                {{ profile_user.username|first|upper }}
+            </div>
+            <div class="profile-details">
+                <h1>
+                    {{ profile_user.username }}
+                    {% if profile_user.isAuthor %}
+                        <span class="author-badge">👑 Автор</span>
+                    {% endif %}
+                    {% if user != profile_user and user.is_authenticated %}
+                        {% if is_subscribed %}
+                            <span class="subscription-status subscribed">Подписан</span>
+                        {% else %}
+                            <span class="subscription-status not-subscribed">Не подписан</span>
+                        {% endif %}
+                    {% endif %}
+                </h1>
+                
+                <p class="profile-bio">О пользователе:</p>
+                {% if profile_user.bio %}
+                <p class="profile-bio">{{ profile_user.bio }}</p>
+                {% else %}
+                <p class="profile-bio">Пользователь еще не добавил информацию о себе</p>
+                {% endif %}
+                
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ posts.count }}</span>
+                        <span class="stat-label">Постов</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ subscribers_count }}</span>
+                        <span class="stat-label">Подписчиков</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ subscriptions_count }}</span>
+                    
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="profile-actions">
+            {% if user == profile_user %}
+                <a href="{% url 'edit_profile' %}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Редактировать
+                </a>
+            {% else %}
+                {% if user.is_authenticated %}
+                    {% if is_subscribed %}
+                        <form method="post" action="{% url 'unsubscribe' profile_user.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-user-minus"></i> Отписаться
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% url 'subscribe_to_author' profile_user.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-user-plus"></i> Подписаться
+                            </button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Основной контент -->
+    <div class="profile-content">
+        <!-- Левая панель -->
+        <div class="profile-sidebar">
+            <div class="sidebar-section">
+                <h3>📊 Информация</h3>
+                <div class="info-item">
+                    <span class="info-label">Дата регистрации:</span>
+                    <span class="info-value">{{ profile_user.date_joined|date:"d.m.Y" }}</span>
+                </div>
+                {% if profile_user.email %}
+                <div class="info-item">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">{{ profile_user.email }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>⚡ Быстрые действия</h3>
+                <div class="action-buttons">
+                    {% if user == profile_user %}
+                        {% if not user.isAuthor %}
+                        <a href="{% url 'become_author' %}" class="action-button success">
+                            <span class="action-icon">👑</span>
+                            <span>Стать автором</span>
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'create_post' %}" class="action-button">
+                            <span class="action-icon">📝</span>
+                            <span>Создать пост</span>
+                        </a>
+                        
+                        {% if user.isAuthor %}
+                        <a href="{% url 'create_subscribe_plan' %}" class="action-button">
+                            <span class="action-icon">💰</span>
+                            <span>Создать план подписки</span>
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'edit_profile' %}" class="action-button edit">
+                            <span class="action-icon">⚙️</span>
+                            <span>Настройки профиля</span>
+                        </a>
+                        
+                    {% else %}
+                        
+                        {% if user.is_authenticated and not is_subscribed %}
+                        <form method="post" action="{% url 'subscribe_to_author' profile_user.id %}" style="display: block;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-button success" style="width: 100%;">
+                                <span class="action-icon">👍</span>
+                                <span>Подписаться</span>
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Правая панель с вкладками -->
+        <div class="profile-main">
+            <!-- Навигация по вкладкам -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="posts">📝 Посты ({{ posts.count }})</button>
+                {% if profile_user.isAuthor %}
+                <button class="tab-btn" data-tab="plans">💰 Подписки ({{ subscription_plans.count }})</button>
+                <span class="tab-btn" data-tab="subscribers">👥 Подписчики ({{ subscribers_count }})</span>
+                {% endif %}
+            </div>
+            
+            <!-- Вкладка "Посты" -->
+            <div id="posts" class="tab-content active">
+                {% if posts %}
+                <div class="posts-grid">
+                    {% for post in posts %}
+                        {% if post.images %}
+                        <div class="post-image">
+                            <img src="{{ post.images }}" alt="{{ post.header }}">
+                        </div>
+                        {% endif %}
+                        <div class="post-content">
+                            <h4>{{ post.header }}</h4>
+                            <p style="color: #666; font-size: 0.95em; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ post.text|truncatechars:150 }}
+                            </p>
+                            <div class="post-meta">
+                                <span>{{ post.created_at|date:"d.m.Y" }}</span>
+                                {% if post.is_premial %}
+                                <span class="badge bg-warning">Премиум</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <h3>Пока нет постов</h3>
+                    {% if user == profile_user %}
+                    <p>Создайте свой первый пост и поделитесь им с миром!</p>
+                    <a href="{% url 'create_post' %}" class="btn btn-primary">Создать пост</a>
+                    {% else %}
+                    <p>Этот пользователь еще не опубликовал ни одного поста</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Вкладка "Планы подписки" (только для авторов) -->
+            {% if profile_user.isAuthor %}
+            <div id="plans" class="tab-content">
+                {% if subscription_plans %}
+                <div class="subscriptions-grid">
+                    {% for plan in subscription_plans %}
+                    <div class="author-card">
+                        <div style="flex: 1;">
+                            <h4>{{ plan.name }}</h4>
+                            <div class="author-stats-small">
+                                Цена: {{ plan.price }}₽
+                            </div>
+                            <p style="color: #666; margin: 10px 0;">{{ plan.describe }}</p>
+                            {% if user == profile_user %}
+        
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <a href="{% url 'edit_plan' plan.id %}" class="btn btn-sm btn-primary">
+                                    Редактировать
+                                </a>
+                                <form method="post" action="{% url 'delete_plan' plan.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger" 
+                                            onclick="return confirm('Удалить этот план?')">
+                                        Удалить
+                                    </button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <a href="{% url 'subscribe_to_plan' plan.id %}" class="btn btn-sm btn-success" 
+                               style="margin-top: 10px;">
+                                Подписаться
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">💰</div>
+                    <h3>Пока нет планов подписки</h3>
+                    {% if user == profile_user %}
+                    <p>Создайте свой первую подписку для монетизации контента</p>
+                    <a href="{% url 'create_subscribe_plan' %}" class="btn btn-primary">Создать подписки</a>
+                    {% else %}
+                    <p>Этот автор пока не создал подписок</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Переключение вкладок
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Убираем активный класс у всех кнопок
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            // Добавляем активный класс текущей кнопке
+            this.classList.add('active');
+            
+            // Скрываем все вкладки
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Показываем нужную вкладку
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+    
+    // Функция для отправки сообщения
+    function sendMessage() {
+        const message = prompt('Введите ваше сообщение:');
+        if (message) {
+            fetch('/send-message/{{ profile_user.id }}/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    message: message
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Сообщение отправлено!');
+                } else {
+                    alert('Ошибка при отправке сообщения');
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}
