@@ -263,11 +263,7 @@
 {% block header %}
 <div class="top">
     <div class="finger-paint-regular" onclick="window.location.href='{% url 'home' %}'">FlowPost</div>
-    <div class="search_bar">
-        <form method="get" action="{% url 'search' %}" class="search-form">
-            <input type="text" name="q" required placeholder="Поиск...">
-        </form>
-    </div>
+
     
     <div class="reg">
         {% if user.is_authenticated %}

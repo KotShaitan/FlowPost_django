@@ -15,48 +15,60 @@ from django.db.models import Q
 
 
 def home_view(request):
-    # Получаем все посты, отсортированные по дате (добавьте поле created_date в модель Post)
-    posts = Post.objects.all()
+    category = request.GET.get('category', 'all')
     
     if request.user.is_authenticated:
-        # Получаем авторов, на которых подписан пользователь
         subscribed_authors_ids = Subscribe.objects.filter(
             subscriber=request.user,
             date_end__gt=timezone.now()
         ).values_list('plan__author__id', flat=True).distinct()
+
+        subscribed_plan_ids = Subscribe.objects.filter(
+            subscriber=request.user,
+            date_end__gt=timezone.now()
+        ).values_list('plan__id', flat=True).distinct()
         
         posts = Post.objects.filter(
-            Q(is_premial=False) |  # Бесплатные посты
-            Q(is_premial=True, author__id__in=subscribed_authors_ids) |  # Премиум посты от подписанных авторов
-            Q(author=request.user)  # Собственные посты
+            Q(is_premial=False) |
+            Q(is_premial=True, author__id__in=subscribed_authors_ids) |
+            Q(author=request.user)
         ).distinct()
 
     else:
         posts = Post.objects.filter(is_premial=False)
-    # Пагинация
-    paginator = Paginator(posts, 10)  # 10 постов на странице
+
+    # Применяем фильтр по категории ДО пагинации
+    if category == 'premium':
+        posts = posts.filter(is_premial=True)
+    elif category == 'free':
+        posts = posts.filter(is_premial=False)
+    # category == 'all' - не фильтруем
+
+    # Добавляем сортировку по дате (если есть поле created_at)
+    # Если нет поля created_at, можно сортировать по id
+    posts = posts.order_by('-id')  # или '-created_at' если есть
+
+    paginator = Paginator(posts, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Получаем подписки пользователя, если он авторизован
-    subscriptions = []
     if request.user.is_authenticated:
-        subscriptions = Subscribe.objects.filter(
+        Subscribe.objects.filter(
             subscriber=request.user,
             date_end__gt=timezone.now()
         ).select_related('plan', 'plan__author')
         
-    # Получаем авторов для подписок в боковой панели
     authors = CustomUser.objects.filter(isAuthor=True)[:10]
     
     context = {
         'posts': page_obj,
         'authors': authors,
         'page_obj': page_obj,
+        'current_category': category,  # добавляем для шаблона
     }
     return render(request, 'main/home.html', context)
-
 def register_view(request):
+    """Отображение окна регистрации"""
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
@@ -67,7 +79,6 @@ def register_view(request):
             messages.success(request, 'Регистрация прошла успешно!')
             return redirect('home')
         else:
-            # Покажем ошибки формы
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
@@ -77,6 +88,7 @@ def register_view(request):
     return render(request, 'main/register.html', {'form': form})
 
 def login_view(request):
+    """Отображение окна авторизации"""
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -99,16 +111,18 @@ def login_view(request):
     return render(request, 'main/login.html', {'form': form})
 
 def logout_view(request):
+    """View для выхода из аккаунта"""
     logout(request)
     messages.success(request, 'Вы успешно вышли из системы.')
     return redirect('home') 
 
 @login_required
 def create_subscribe_plan(request):
+    """View для создания тарифа подписок"""
     if not request.user.isAuthor:
-        # Можно добавить сообщение об ошибке или редирект
+
         messages.error(request, "Только авторы могут создавать планы подписки")
-        return redirect('home')  # или другая страница
+        return redirect('home')
 
     if request.method == 'POST':
         author = request.user
@@ -137,9 +151,10 @@ def create_subscribe_plan(request):
 
 @login_required
 def create_post(request):
+    """View для создния поста"""
     if not request.user.isAuthor:
         messages.error(request, "Только авторы могут создавать посты")
-        return redirect('home')  # или другая страница
+        return redirect('home')  
     
     subscription_plans = Subscribe_plan.objects.filter(author=request.user)
 
@@ -150,7 +165,6 @@ def create_post(request):
         is_premial = 'is_premial' in request.POST
         subscription_plan_id = request.POST.get('subscription_plan')
         
-        # Создаем пост
         post = Post.objects.create(
             header=header,
             text=text,
@@ -174,42 +188,9 @@ def create_post(request):
     }
     return render(request, 'main/create_post.html', context)
 
-def search_view(request):
-    query = request.GET.get('q', '')
-    sort = request.GET.get('sort', 'relevance')
-    results = []
-    
-    if query:
-        results = Post.objects.filter(
-            Q(header__icontains=query) |
-            Q(text__icontains=query) |
-            Q(author__username__icontains=query)
-        )
-        
-        # Применяем сортировку
-        if sort == 'new':
-            results = results.order_by('-created_date')
-        elif sort == 'premium':
-            results = results.filter(is_premial=True).order_by('-id')
-        elif sort == 'free':
-            results = results.filter(is_premial=False).order_by('-id')
-        else:
-            # Сортировка по релевантности (простая версия)
-            results = results.order_by('-id')
-    
-    # Популярные теги для предложений
-    trending_tags = ['Python', 'Django', 'Веб-разработка', 'Дизайн', 'Бизнес', 'Технологии', 'Стартапы']
-    
-    context = {
-        'query': query,
-        'results': results,
-        'sort': sort,
-        'trending_tags': trending_tags,
-    }
-    return render(request, 'search.html', context)
-
 @login_required
 def my_subscriptions(request):
+    """View для отображения подписок """
     subscriptions = Subscribe.objects.filter(author=request.user)
     return render(request, 'main/home.html', subscriptions)
 
@@ -224,18 +205,16 @@ import datetime
 @login_required
 def profile(request, id=None):
     """Просмотр профиля пользователя"""
-    # Если username не указан, показываем свой профиль
+    if request.user is None:
+        return redirect('login')
     if id:
         profile_user = get_object_or_404(CustomUser, id=id)
     else:
         profile_user = request.user
-    
-    # Статистика пользователя
+
     posts = Post.objects.filter(author=profile_user)
     subscription_plans = Subscribe_plan.objects.filter(author=profile_user)
-    is_subscribed = False  # <-- Добавляем эту переменную
-    
-    # Активные подписки пользователя (если смотрим чужой профиль)
+    is_subscribed = False
     active_subscriptions = None
     if profile_user != request.user and profile_user.isAuthor:
         active_subscriptions = Subscribe.objects.filter(
@@ -246,13 +225,13 @@ def profile(request, id=None):
 
         is_subscribed = active_subscriptions.exists()
     
-    # Подписки пользователя на других авторов
     user_subscriptions = Subscribe.objects.filter(
         subscriber=request.user,
         date_end__gt=timezone.now()
     ).select_related('plan', 'plan__author')
   
     subscribers_count = 0
+
     if profile_user.isAuthor:
         subscribers_count = Subscribe.objects.filter(
             plan__author=profile_user,
@@ -288,10 +267,7 @@ def edit_profile_view(request):
 def become_author_view(request):
     """Запрос на получение прав автора"""
     if request.method == 'POST':
-        # Здесь можно добавить логику отправки заявки администратору
-        # или автоматически присвоить права (не рекомендуется)
-        
-        # Временно: автоматически делаем автором
+    
         request.user.isAuthor = True
         request.user.save()
         
@@ -306,7 +282,6 @@ def edit_plan_view(request, plan_id):
     plan = get_object_or_404(Subscribe_plan, id=plan_id, author=request.user)
     
     if request.method == 'POST':
-        # Обновляем поля плана
         plan.name = request.POST.get('name', plan.name)
         plan.price = request.POST.get('price', plan.price)
         plan.describe = request.POST.get('describe', plan.describe)
@@ -336,14 +311,12 @@ def subscribe_to_author_view(request, author_id):
     """Страница оформления подписки на автора"""
     author = get_object_or_404(CustomUser, id=author_id, isAuthor=True)
     
-    # Проверяем, подписан ли уже пользователь
     user_is_subscribed = Subscribe.objects.filter(
         subscriber=request.user,
         plan__author=author,
         date_end__gt=timezone.now()
     ).exists()
     
-    # Получаем активную подписку (если есть)
     active_subscription = None
     if user_is_subscribed:
         active_subscription = Subscribe.objects.filter(
@@ -352,7 +325,6 @@ def subscribe_to_author_view(request, author_id):
             date_end__gt=timezone.now()
         ).first()
     
-    # Получаем планы подписки автора
     plans = Subscribe_plan.objects.filter(author=author)
     
     context = {
@@ -371,7 +343,6 @@ def process_subscription_view(request, plan_id):
     """Обработка оформления подписки"""
     plan = get_object_or_404(Subscribe_plan, id=plan_id)
     
-    # Проверяем, не подписан ли уже пользователь
     existing_subscription = Subscribe.objects.filter(
         subscriber=request.user,
         plan=plan,
@@ -382,12 +353,11 @@ def process_subscription_view(request, plan_id):
         messages.info(request, 'Вы уже подписаны на этот план!')
         return redirect('profile', id=plan.author.id)
     
-    # Создаем подписку
     Subscribe.objects.create(
         plan=plan,
         subscriber=request.user,
         date_begin=timezone.now(),
-        date_end=timezone.now() + timezone.timedelta(days=30)  # 30 дней
+        date_end=timezone.now() + timezone.timedelta(days=30) 
     )
     
     messages.success(request, f'Вы успешно подписались на план "{plan.name}"!')
@@ -397,29 +367,25 @@ def process_subscription_view(request, plan_id):
 def unsubscribe_view(request, author_id):
     """Страница отписки от автора"""
     author = get_object_or_404(CustomUser, id=author_id, isAuthor=True)
-    
-    # Получаем активную подписку пользователя
+
     subscription = Subscribe.objects.filter(
         subscriber=request.user,
         plan__author=author,
         date_end__gt=timezone.now()
     ).first()
     
-    # Если нет активной подписки
     if not subscription:
         messages.info(request, 'У вас нет активной подписки на этого автора')
         return redirect('profile', id=author_id)
     
-    # Если POST запрос - отписываем
     if request.method == 'POST':
-        # Просто завершаем подписку (устанавливаем дату окончания на текущую)
+
         subscription.date_end = timezone.now()
         subscription.save()
         
         messages.success(request, f'Вы отписались от {author.username}')
         return redirect('profile', id=author_id)
     
-    # Если GET запрос - показываем страницу подтверждения
     context = {
         'author': author,
         'subscription': subscription,

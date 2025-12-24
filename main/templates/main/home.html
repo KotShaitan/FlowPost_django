@@ -3,11 +3,6 @@
 {% block header %}
 <div class="top">
     <div class="finger-paint-regular" onclick="window.location.href='{% url 'home' %}'">FlowPost</div>
-    <div class="search_bar">
-        <form method="get" action="{% url 'search' %}" class="search-form">
-            <input type="text" name="q" required placeholder="Поиск...">
-        </form>
-    </div>
     
     <div class="reg">
         {% if user.is_authenticated %}
@@ -44,7 +39,6 @@
             {% endfor %}
         {% else %}
             <p>У вас пока нет подписок</p>
-            <a href="{% url 'home' %}#authors" class="btn btn-sm btn-outline-primary">Найти авторов</a>
         {% endif %}
         <hr>
         <h3>Популярные авторы</h3>
@@ -143,22 +137,21 @@
     <!-- Правая панель: Категории -->
     <div class="right">
         <h3>Категории</h3>
-        <ul class="category-list">
-            <li><a href="?category=all">Все посты</a></li>
-            <li><a href="?category=premium">Премиум</a></li>
-            <li><a href="?category=free">Бесплатные</a></li>
-        </ul>
+        <div class="btn-group mb-4" role="group" aria-label="Фильтр постов">
+        <a href="?category=all" 
+        class="btn btn-outline-primary {% if current_category == 'all' %}active{% endif %}">
+            Все посты
+        </a>
+        <a href="?category=premium" 
+        class="btn btn-outline-warning {% if current_category == 'premium' %}active{% endif %}">
+            <i class="fas fa-crown"></i> Премиум
+        </a>
+        <a href="?category=free" 
+        class="btn btn-outline-success {% if current_category == 'free' %}active{% endif %}">
+            <i class="fas fa-unlock"></i> Бесплатные
+        </a>
+    </div>
         
-        <hr>
-        
-        <h3>Статистика</h3>
-        <div class="stats">
-            <p>Всего постов: {{ posts.paginator.count }}</p>
-            <p>Авторов: {{ authors.count }}</p>
-            {% if user.is_authenticated %}
-                <p>Ваши подписки: {{ subscriptions.count }}</p>
-            {% endif %}
-        </div>
     </div>
 </div>
 {% endblock %}
