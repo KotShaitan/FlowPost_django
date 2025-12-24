@@ -23,16 +23,16 @@
 
 ## Изображения Основных страниц
 * Главная страница не регистрированного пользователя
-![](photo_readme\main_page.png)
+![](https://github.com/KotShaitan/FlowPost_django/blob/main/photo_readme/image.png)
 * Страница чужого профиля
-![](photo_readme\other_profile.png)
+![](https://github.com/KotShaitan/FlowPost_django/blob/main/photo_readme/other_profile.png)
 * Страница своего профиля
-![](photo_readme\profile.png)
+![](https://github.com/KotShaitan/FlowPost_django/blob/main/photo_readme/profile.png)
 * Страница создания поста
-![](photo_readme\image.png)
+![](https://github.com/KotShaitan/FlowPost_django/blob/main/photo_readme/image.png)
 
 ## Диаграмма БД
-![](photo_readme\диаграмма.png)
+![](https://github.com/KotShaitan/FlowPost_django/blob/main/photo_readme/диаграмма.png)
 
 
 
