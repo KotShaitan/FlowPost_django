@@ -23,7 +23,7 @@
 
 ## Изображения Основных страниц
 * Главная страница не регистрированного пользователя
-![](photo_readme\main_page.png)
+![](https://github.com/KotShaitan/FlowPost_django/blob/main/photo_readme/image.png)
 * Страница чужого профиля
 ![](photo_readme\other_profile.png)
 * Страница своего профиля
